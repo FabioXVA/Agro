@@ -8,20 +8,12 @@ var DestinoDevCss = './dev/css';
 
 
 
-var ConfigDevScss = {
-	outputStyle: 'expanded'
-}
-
-var ConfigProdScss = {
-	outputStyle: 'compressed'
-}
-
-
 var gulp = require('gulp');
 var sass = require('gulp-css-scss');
 var rename = require('gulp-rename');
 var watch = require('gulp-watch');
-var wait = require('gulp-wait')
+var wait = require('gulp-wait');
+var cleanCSS = require('gulp-clean-css');
 var browserSync = require('browser-sync').create();
 
 gulp.task('serve', ['sassDev', 'sassProd','watch'], function () {
@@ -41,16 +33,27 @@ gulp.task('sassProd', () => {
 		.pipe(gulp.dest(DestinoDevCss));
 });
 
+
 gulp.task('sassDev', function () {
 	return gulp.src(ArquivosSass)
 		.pipe(sass())
+	    .pipe(cleanCSS())
 		.pipe(browserSync.stream())
 		.pipe(rename('style.css'))
 		.pipe(wait(500))
-		.pipe(gulp.dest(DestinoDevCss));
+		.pipe(gulp.dest(DestinoProdCss));
 });
 
-
+gulp.task('mimiffy', () => {
+  return gulp.src('dev/css/style.css')
+    	 .pipe(cleanCSS({debug: true}, (details) => {
+	      console.log(`${details.name}: ${details.stats.originalSize}`);
+	      console.log(`${details.name}: ${details.stats.minifiedSize}`);
+	    }))
+    	 .pipe(rename('style.css'))
+    	 .pipe(wait(500))
+		 .pipe(gulp.dest(DestinoProdCss));
+});
 
 gulp.task('watch', function () {
 	gulp.watch('./src/sass/**/*.scss', ['sassDev', 'sassProd']);
@@ -58,4 +61,4 @@ gulp.task('watch', function () {
 	gulp.watch("./**/*.html").on('change', browserSync.reload);
 });
 
-gulp.task('default', ['sassDev', 'sassProd'	,'serve', 'watch'], function () {});
+gulp.task('default', ['sassDev', 'sassProd'	,'serve', 'mimiffy', 'watch'], function () {});
